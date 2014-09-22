@@ -49,7 +49,7 @@ public class maidsafeRootAction implements UnprotectedRootAction {
             return;
         }
 
-
+        maidsafeGitHub gh = maidsafeTrigger.getDscp().getGitHub();
     }
 
 

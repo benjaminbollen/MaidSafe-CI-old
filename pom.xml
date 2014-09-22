@@ -8,35 +8,31 @@
         <version>1.532</version>
     </parent>
 
-    <artifactId>ghprb</artifactId>
-    <name>GitHub Pull Request Builder</name>
-    <version>1.13-SNAPSHOT</version>
+    <artifactId>maidsafeCI</artifactId>
+    <name>MaidSafe Continuous Integration</name>
+    <version>0.1</version>
     <packaging>hpi</packaging>
 
-    <url>https://wiki.jenkins-ci.org/display/JENKINS/GitHub+pull+request+builder+plugin</url>
+    <url>https://www.github.com/benjaminbollen/MaidSafe-CI</url>
 
     <developers>
         <developer>
-            <id>janinko</id>
-            <name>Honza Brázdil</name>
-            <email>jbrazdil@redhat.com</email>
-        </developer>
-        <developer>
-            <id>valdisrigdon</id>
-            <name>Valdis Rigdon</name>
+            <id>benjaminbollen</id>
+            <name>Benjamin Bollen</name>
+            <email>benjamin.bollen@maidsafe.net</email>
         </developer>
     </developers>
 
     <scm>
-        <connection>scm:git:ssh://github.com/jenkinsci/ghprb-plugin.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com/jenkinsci/ghprb-plugin.git</developerConnection>
-        <url>https://github.com/jenkinsci/ghprb-plugin</url>
+        <connection>scm:git:ssh://github.com/benjaminbollen/MaidSAfe-CI.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com/benjaminbollen/MaidSAfe-CI.git</developerConnection>
+        <url>https://github.com/benjaminbollen/MaidSAfe-CI</url>
         <tag>HEAD</tag>
     </scm>
 
     <issueManagement>
         <system>GitHub</system>
-        <url>https://github.com/janinko/ghprb/issues</url>
+        <url>https://github.com/benjaminbollen/MaidSafe-CI/issues</url>
     </issueManagement>
 
     <properties>

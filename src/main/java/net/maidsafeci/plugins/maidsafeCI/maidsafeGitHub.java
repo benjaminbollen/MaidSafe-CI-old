@@ -14,7 +14,9 @@ public class maidsafeGitHub {
     private static final Logger logger = Logger.getLogger(maidsafeGitHub.class.getName());
     private GitHub gh;
 
-
+    private void connect() throws IOException {
+        String accessToken = maidsafeTrigger.getDscp().getAccessToken
+    }
 
 
 }
