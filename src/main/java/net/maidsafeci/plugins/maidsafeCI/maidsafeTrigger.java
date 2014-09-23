@@ -43,4 +43,29 @@ public class maidsafeTrigger extends Trigger<AbstractProject<?, ?>> {
     private Boolean autoCloseFailedPullRequests;
     private List<maidsafeBranch> whiteListTargetBranches;
     private transient maidsafe helper;
+    private String project;
+
+    @DataBoundConstructor
+    public maidsafeTrigger(String triggerPhrase,
+                           Boolean onlyTriggerPhrase,
+                           Boolean autoCloseFailedPullRequests,
+                           List<maidsafeBranch> whiteListTargetBranches) throws ANTLRException {
+        this.triggerPhrase = triggerPhrase;
+        this.onlyTriggerPhrase = onlyTriggerPhrase;
+        this.autoCloseFailedPullRequests = autoCloseFailedPullRequests;
+        this.whiteListTargetBranches = whiteListTargetBranches;
+    }
+
+    public static maidsafeTrigger extractTrigger(AbstractProject proj) {
+        Trigger trigger = proj.getTrigger(maidsafeTrigger.class);
+        if (trigger == null || !(trigger instanceof maidsafeTrigger)) {
+            return null;
+        }
+        return (maidsafeTrigger) trigger;
+    }
+
+    public static DescriptorImpl getDscp() { return DESCRIPTOR; }
+
+    @Override
+
 }

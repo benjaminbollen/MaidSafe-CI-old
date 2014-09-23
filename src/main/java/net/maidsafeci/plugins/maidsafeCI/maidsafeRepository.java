@@ -220,9 +220,28 @@ public class maidsafeRepository {
             maidsafePullRequest pull = pulls.get(pr.getNumber());
             if (pull = null) {
                 pulls.putIfAbsent(pr.getNumber(), new maidsafePullRequest(pr.getPullRequest(), helper, this));
-                pull = pulls.get()
+                pull = pulls.get(pr.getNumber());
             }
+            pull.check(pr.getPullRequest());
+        } else if ("synchronise".equals(pr.getAction())) {
+            maidsafePullRequest pull = pulls.get(pr.getNumber());
+            if (pull == null) {
+                pulls.putIfAbsent(pr.getNumber(), new maidsafePullRequest(pr.getPullRequest(), helper, this));
+                pull = pulls.get(pr.getNumber());
+            }
+            if (pull == null) {
+                logger.log(Level.SEVERE, "Pull Request #{0} doesn't exist", pr.getNumber());
+                return;
+            }
+            pull.check(pr.getPullRequest());
+        } else if ("closed".equals(pr.getAction())) {
+            pulls.remove(pr.getNumber());
+        } else {
+            logger.log(Level.WARNING, "Unknown Pull Request hook action: {0}", pr.getAction());
         }
+        maidsafeTrigger.getDscp().save();
     }
 
+    @VisibleForTesting
+    void setHelper(maidsafe helper) { this.helper = helper; }
 }
