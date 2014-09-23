@@ -104,6 +104,125 @@ public class maidsafeRepository {
     }
 
     private void check(GHPullRequest pr) {
-
+        final Integer id = pr.getNumber();
+        maidsafePullRequest pull;
+        if (pulls.containsKey(id)) {
+            pull = pulls.get(id);
+        } else {
+            pulls.putIfAbsent(id, new maidsafePullRequest(helper, this));
+            pull = pulls.get(id);
+        }
+        pull.check(pr);
     }
+
+    public void creatCommitStatus(AbstractBuild<?, ?> build, GHCommitState state, String message, int id) {
+        String sha1 = build.getCause(maidsafeCause.class).getCommit();
+        createCommitStatus(sha1, state, Jenkins.getInstance().getRootUrl() + build.getURl(), message, id);
+    }
+
+    public void createCommitStatus(String sha1, GHCommitState state, String url, String message, int id) {
+        Logger.log(Level.INFO, "Setting status of {0} to {1} with url {2} and message: {3}", new Object[]{sha1, state, url, message});
+        try {
+            ghRepository.createCommitStatus(sha1, state, url, message);
+        } catch (IOException ex) {
+            if (maidsafeTrigger.getDscp().getUseComments()) {
+                logger.log(Level.INFO, "Could not update commit status of the Pull Request on GitHub. Trying to send comment.", ex);
+                if (state == GHCommitState.SUCCESS) {
+                    message = message + " " + maidsafeTrigger.getDscp().getMsgSuccess();
+                } else {
+                    message = message + " " + maidsafeTrigger.getDscp().getMsgFailure();
+                }
+                addComment(id, message);
+            } else {
+                logger.log(Level.SEVERE, "Could not update commit status of the Pull Request on GitHub.", ex);
+            }
+        }
+    }
+
+    public String getName() { return reponame; }
+
+    public void addComment(int id, String comment) {
+        if (comment.trim().isEmpty()) return;
+
+        try {
+            ghRepository.getPullRequest(id).comment(comment);
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Couldn't add comment to pull request #" + id + ": '" + comment + "'", ex);
+        }
+    }
+
+    public void closePullRequest(int id) {
+        try {
+            ghRepository.getPullRequest(id).close();
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Couldn't close the pull request #" + id + ": '", ex);
+        }
+    }
+
+    private boolean hookExist() throws IOException {
+        for (GHHook h : ghRepository.getHooks()) {
+            if (!"web".equals(h.getName())) {  // weird selection??
+                continue;
+            }
+            if (!getHookUrl().equals(h.getConfig().get("url"))) {
+                continue;
+            }
+            return true;
+        }
+        return false;
+    }
+
+    public boolean createHook() {
+        if (ghRepository == null) {
+            logger.log(Level.INFO, "Repository not available, cannot set pull request hook for repository {0}", reponame);
+            return false;
+        }
+        try {
+            if(hookExist()) {
+                return true;
+            }
+            Map<String, String> config = new HashMap<String, String>();
+            config.put("url", new URL(getHookUrl()).toExternalForm());
+            config.put("insecure_ssl", "1");
+            ghRepository.createHook("web", config, HOOK_EVENTS, true);
+            return true;
+        } catch (IOException ex) {
+            logger.log(Level.SEVERE, "Couldn't create web hook for repository {0}. Does Jenkins@maidsafe.net have admin rights to the repository?", reponame);
+            return false;
+        }
+    }
+
+    private static String getHookUrl() {
+        return Jenkins.getInstance().getRootUrl() + maidsafeRootAction.URL + "/";
+    }
+
+    public GHPullRequest get PullRequest(int id) throws IOException {
+        return ghRepository.getPullRequest(id);
+    }
+
+    void onIssueCommentHook(IssueComment issueComment) throws IOException {
+        int id = issueComment.getIssue().getNumber();
+        logger.log(Level.FINER, "Comment on issue #{0} from {1}: {2}", new Object[]{id, issueComment.getComment().getUser(), issueComment.getComment().getBody()});
+        if (!"created".equals(issueComment.getAction())) {
+            return;
+        }
+        maidsafePullRequest pull = pulls.get(id);
+        if (pull == null) {
+            pull = new maidsafePullRequest(ghRepository(id), helper, this);
+            pulls.put(id, pull);
+        }
+        pull.check(issueComment.getComment());
+        maidsafeTrigger.getDscp().save(); // why?
+    }
+
+    void onPullRequestHook(PullRequest pr) {
+        if ("openend".equals(pr.getAction()) || "reopened".equals(pr.getAction())) {
+            maidsafePullRequest pull = pulls.get(pr.getNumber());
+            if (pull = null) {
+                pulls.putIfAbsent(pr.getNumber(), new maidsafePullRequest(pr.getPullRequest(), helper, this));
+                pull = pulls.get()
+            }
+        }
+    }
+
 }
