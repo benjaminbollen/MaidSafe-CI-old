@@ -56,8 +56,8 @@ public class maidsafeTrigger extends Trigger<AbstractProject<?, ?>> {
         this.whiteListTargetBranches = whiteListTargetBranches;
     }
 
-    public static maidsafeTrigger extractTrigger(AbstractProject proj) {
-        Trigger trigger = proj.getTrigger(maidsafeTrigger.class);
+    public static maidsafeTrigger extractTrigger(AbstractProject project) {
+        Trigger trigger = project.getTrigger(maidsafeTrigger.class);
         if (trigger == null || !(trigger instanceof maidsafeTrigger)) {
             return null;
         }
@@ -67,5 +67,55 @@ public class maidsafeTrigger extends Trigger<AbstractProject<?, ?>> {
     public static DescriptorImpl getDscp() { return DESCRIPTOR; }
 
     @Override
+    public void start(AbstractProject<?, ?> project, boolean newInstance) {
+        this.project = project.getName();
+        if (project.getProperty(GithubProjectProperty.class) == null) {
+            logger.log(Level.INFO, "GitHub project not set up, cannot start maidsafe trigger for job " + this.project);
+            return;
+        }
+        try {
+            helper = createMaidsafe(project);
+        } catch (IllegalStateException ex) {
+            logger.log(Level.SEVERE, "Can't start maidsafe trigger", ex);
+            return;
+        }
 
+        logger.log(Level.INFO, "Starting the maidsafe trigger for the {0} job; newInstance is {1}",
+                new String[]{this.project, String.valueOf(newInstance)});
+        super.start(project, newInstance);
+        helper.init();
+    }
+
+    maidsafe createMaidsafe(AbstractProject<?, ?> project) {
+        return new maidsafe(project, this, getDescriptor().getPullRequests(project.getName()));
+    }
+
+    @Override
+    public void stop() {
+        logger.log(Level.INFO, "Stopping the ghprb trigger for project {0}", this.project);
+        if (helper != null) {
+            helper.stop();
+            helper = null;
+        }
+        super.stop();
+    }
+
+    @Override
+    public void run() {
+        // only trigger on GitHub webhooks, not from cron or
+        logger.log(Level.INFO, "Only running from GitHub webhook")
+        return;
+    }
+
+    public QueueTaskFuture<?> startJob(maidsafeCause cause, maidsafeRepository repo) {
+        ArrayList<ParameterValue> values = getDefaultParameters();
+        final String commitSha = cause.isMerged() ? "origin/pr/" + cause.getPullID() + "/merge" : cause.getCommit();
+        values.add(new StringParameterValue("sha1", commitSha));
+        values.add(new StringParameterValue("maidsafeActualCommit", cause.get));
+
+    }
+
+    public static final class DescriptorImpl extends TriggerDescriptor {
+
+    }
 }
